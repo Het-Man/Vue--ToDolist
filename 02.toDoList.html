@@ -1,0 +1,292 @@
+<html>
+
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title></title>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="googlebot" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="./css/index.css">
+    <script type="text/javascript" src="./lib/vue.js"></script>
+    <style>
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+
+</head>
+
+<body>
+    <section class="todoapp">
+        <header class="header">
+            <h1>任务清单</h1>
+            <input autofocus="autofocus" autocomplete="off" placeholder="想干啥?" class="new-todo"   v-model="inputTodo" @keyup.enter='addToDo'>
+        </header>
+        <section class="main" >
+            <input type="checkbox" class="toggle-all" @change='checkAllTodo' v-model="checkAll" > 
+            <ul class="todo-list" v-cloak>
+                <li class="todo "  :class='{completed: item.complete, editing: item.isEdit}' v-for="(item, index) in visiableList" >
+                    <div class="view">
+                        <input type="checkbox" @change='checkIsCheckAll' v-model="item.complete" class="toggle">
+                        <label @dblclick='bianji(index)'  >{{item.name}}</label>
+                        <button class="destroy" @click='remove(index)'></button>
+                    </div>                                                                              
+                    <input type="text" @keyup.enter="saveEdit(index)" @keyup.esc="cancelEdit(index)"  @blur='cancelEdit(index)' v-model="cacheEdit" class="edit">
+                </li>
+                
+            </ul>
+        </section>
+        <footer class="footer" v-cloak>
+            <span class="todo-count">
+                <strong>{{noDoneNum}}</strong> 项 剩余
+            </span>
+            <ul class="filters">
+                <li>
+                    <a href="#/all"  :class='{selected:visibility=="全部"}' @click='changeVisiable("全部")' >全部</a>
+                </li>
+                <li>
+                    <a href="#/active" :class='{selected:visibility=="未完成"}' @click='changeVisiable("未完成")' >未完成</a>
+                </li>
+                <li>
+                    <a href="#/completed" :class='{selected:visibility=="完成"}' @click='changeVisiable("完成")' >完成</a>
+                </li>
+            </ul>
+            <button @click='empty' class="clear-completed">
+                清空列表
+            </button>
+        </footer>
+    </section>
+    <footer class="info">
+        <p>双击进入编辑状态</p>
+        <p>鸣谢:
+            <a href="http://evanyou.me">Evan You</a>
+        </p>
+        <p>参考于
+            <a href="http://todomvc.com">TodoMVC</a>
+        </p>
+    </footer>
+
+    <script>
+
+       
+        let toDolist = JSON.parse(window.localStorage.getItem('SZHM19List'));
+        if(toDolist){
+        }else{
+            toDolist = [
+                    {
+                        name:'洗碗',
+                        complete:true,
+                        isEdit:false
+                    },
+                    {
+                        name:'饭后遛狗',
+                        complete:false,
+                        isEdit:false
+                        
+
+                    
+                    },
+                    {
+                        name:'饭后走走活到久久',
+                        complete:false,
+                        isEdit:false
+                        
+
+                    
+                    },
+                    {
+                        name:'饭后走啊走',
+                        complete:false,
+                        isEdit:false
+                        
+                    },
+                    {
+                        name:'要去哪里啊',
+                        complete:false,
+                        isEdit:false
+                        
+                    },
+                    {
+                        name:'去找尼古拉斯赵四',
+                        complete:false,
+                        isEdit:false
+                        
+                    }
+                ]
+        }
+
+
+        let app = new Vue ({
+            el:'.todoapp',
+            data:{
+                //是否全选;
+                checkAll:false,
+                //输入的代办事项
+                inputTodo:'',
+                //暂时存放需要修改的值
+                cacheEdit:'',
+                //当前列表的筛选条件
+                visibility:'全部',
+                toDolist
+            },
+            methods: {
+                //新增
+                addToDo() {
+                    //去掉前后空格
+                    this.inputTodo = this.inputTodo.trim();
+                    //值不为空
+                    if(this.inputTodo != ''){
+                        //加到数组
+                        this.toDolist.push({
+                            name: this.inputTodo,
+                            complete: false,
+                            isEdit:false
+                        })
+                        //清空数据
+                        this.inputTodo = '';
+                    }
+                },
+                //删除
+                remove(index) {
+                    this.toDolist.splice(index,1);
+                },
+                //编辑
+                bianji(index) {
+                    // console.log(1)
+                    //点击哪个一个就把其他的编辑框都取消
+                    for(let i = 0; i < this.toDolist.length; i++) {
+                        this.toDolist[i].isEdit = false;
+                    }
+                    //弹出编辑框
+                    this.toDolist[index].isEdit = !this.toDolist[index].isEdit;
+
+                    //取到原来的值 双向绑定到标签上 让标签显示内容
+
+                    this.cacheEdit = this.toDolist[index].name;
+                    
+                },
+                //回车确认修改
+                saveEdit(index){
+                    //取消编辑框
+                    this.toDolist[index].isEdit = false;
+                    //把暂时存储在cacheEdit的值赋值给原来的name
+                    this.toDolist[index].name = this.cacheEdit;
+                },
+                //按esc撤回编辑
+                cancelEdit(index){
+                    // console.log(index)
+                    this.toDolist[index].isEdit = false;
+                },
+                //清空全部
+                empty(){
+                    this.toDolist = [];
+                },
+                //修改显示的条件
+                changeVisiable(data){
+                    // console.log(data);
+                    this.visibility = data;
+                },
+                //点击全选按钮 全选下方checkbox
+                checkAllTodo(){
+                    for(let i = 0; i < this.toDolist.length; i++) {
+                        this.toDolist[i].complete = this.checkAll;
+                    }
+                },
+                //是否全选
+                checkIsCheckAll(){
+                    //总个数
+                    let totalCount = this.toDolist.length;
+                    //选中的个数
+                    let checkedCount = this.toDolist.filter((v,i)=> {
+                        if(v.complete == true) return v;
+                    }).length
+
+                    // console.log(totalCount);
+                    // console.log(checkedCount);
+                    //赋值给checkAll
+                    this.checkAll = totalCount == checkedCount;
+                    
+                }
+ 
+            },
+            
+            computed: {
+                //计算未完成个数
+                noDoneNum() {
+                    // let num = 0;
+                    // for(let i =0; i< this.toDolist.length; i++) {
+                    //     if(!this.toDolist[i].complete){
+                    //         num++;
+                    //     }
+                    // }
+                    // return num;
+
+                    return this.toDolist.filter((v,i) => {
+                        if(v.complete == false) {
+                            return v;
+                        }
+                    }).length;
+                },
+                //根据条件计算出 需要显示的数组
+                visiableList() {
+                    // let arr = [];
+                    // for(let i = 0; i < this.toDolist.length; i++) {
+                    //     switch (this.visibility) {
+                    //         case '全部':
+                    //             arr.push(this.toDolist[i]);
+                    //             break;
+                    //         case '未完成':
+                    //             if(this.toDolist[i].complete == false){
+
+                    //                 arr.push(this.toDolist[i]);
+                    //             }
+                    //             break;
+                    //         case '完成':
+                    //             if(this.toDolist[i].complete == true){
+                    //                 arr.push(this.toDolist[i]);
+                    //             }
+                    //             break;
+                    //     }
+
+                    // }
+                    // return arr;
+
+                    return this.toDolist.filter((v,i)=> {
+                        switch (this.visibility) {
+                            case '全部':
+                                return v;
+                                break;
+                            case '未完成':
+                                if(this.toDolist[i].complete == false){
+                                   return v;
+                                }
+                                break;
+                            case '完成':
+                                if(this.toDolist[i].complete == true){
+                                    return v;
+                                }
+                                break;
+                        }
+                    })
+                }
+            }
+        })
+
+        // 注册页面关闭事件
+        window.onbeforeunload = function () {
+        //  这是用来设定一个时间, 时间到了, 就会执行一个指定的 method。
+        // setTimeout(onunloadcancel, 10);
+        // return "真的离开?";
+        // window.localStorage.setItem('深圳是一个好地方,除了房价有点贵','111');
+
+        // 保存数据
+        window.localStorage.setItem('SZHM19List',JSON.stringify(toDolist));
+    }
+    </script>
+
+
+</body>
+
+</html>
